@@ -2,6 +2,10 @@
 
 > Messaging library for Figma plugin developers
 
+![loading](docs/assets/ui-loading.gif)
+
+_Example of processing spinner in [Figma Variables Starter](https://github.com/masha312/figma-variables-starter)._
+
 ## Overview
 
 Figma Messaging is a two-way, await-able and type-safe replacement for Figma's [Messaging API](https://www.figma.com/plugin-docs/creating-ui/#sending-messages-between-the-ui-and-plugin-code).
