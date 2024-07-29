@@ -1,6 +1,6 @@
 {
   "name": "figma-messaging",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Messaging library for Figma plugin developers",
   "author": "Dave Stewart",
   "license": "MIT",
