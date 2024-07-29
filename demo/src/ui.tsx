@@ -1,13 +1,13 @@
 import { Button, Columns, Container, Muted, render, Text, TextboxNumeric, VerticalSpace } from '@create-figma-plugin/ui'
 import { h } from 'preact'
 import { useCallback, useState } from 'preact/hooks'
-import { Handlers, makeBus } from 'figma-messaging'
+import { makeBus } from 'figma-messaging'
 
-// import main events
+// import main handler descriptions
 import { type MainHandlers } from './main'
 
-// tell main what events we accept
-export interface UiHandlers extends Handlers {
+// export ui handler descriptions
+export type UiHandlers = {
   update: (num: number) => void
 }
 

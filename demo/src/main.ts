@@ -1,6 +1,10 @@
 import { makeBus } from 'figma-messaging'
 import { showUI } from '@create-figma-plugin/utilities'
+
+// import ui handler descriptions
 import { UiHandlers } from './ui'
+
+let prevY = 0
 
 // create handler
 function create (count: number) {
@@ -9,6 +13,7 @@ function create (count: number) {
     const rect = figma.createRectangle()
     rect.resize(100, 100)
     rect.x = i * 150
+    rect.y = prevY
     rect.fills = [
       {
         color: { b: 0, g: 0.5, r: 1 },
@@ -19,9 +24,10 @@ function create (count: number) {
     nodes.push(rect)
   }
 
+  prevY += 150
+
   // update
   figma.currentPage.selection = nodes
-  figma.viewport.scrollAndZoomIntoView(nodes)
 
   // return message to ui
   return `${nodes.length} nodes created!`
@@ -32,7 +38,7 @@ const handlers = {
   create,
 }
 
-// export handlers for UI
+// export main handler descriptions
 export type MainHandlers = typeof handlers
 
 // main code
