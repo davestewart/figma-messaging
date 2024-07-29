@@ -1,0 +1,41 @@
+{
+  "name": "figma-messaging",
+  "version": "1.0.0",
+  "description": "Messaging library for Figma plugin developers",
+  "author": "Dave Stewart",
+  "license": "MIT",
+  "type": "module",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup",
+    "watch": "tsup --watch",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@figma/plugin-typings": "^1.97.0"
+  },
+  "devDependencies": {
+    "@microsoft/api-extractor": "^7.47.3",
+    "tsup": "^8.2.3",
+    "typescript": ">=5"
+  },
+  "homepage": "https://github.com/davestewart/figma-messaging#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/davestewart/figma-messaging.git"
+  },
+  "keywords": [
+    "figma",
+    "messaging",
+    "ipc",
+    "post-message"
+  ]
+}
