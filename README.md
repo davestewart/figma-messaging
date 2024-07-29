@@ -43,7 +43,12 @@ The package comprises two services, `ipc` and `bus`:
 
 Generally, [bus](docs/bus.md) will be your first choice as it's more feature-rich and user-friendly.
 
+## Demo
+
+To see real-world code, or to build and run a demo plugin live in Figma, check out the demo folder.
+
 ## Next steps
 
-- [Documentation](./docs)
+- [Docs](./docs)
+- [Demo](./demo)
 
