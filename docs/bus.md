@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Bus service is a higher-level message bus service (which wraps [IPC](ipc.md)) to provide:
+The Bus service is a high-level message bus service (which wraps [IPC](ipc.md)) to provide:
 
 - two-way communication between `main` and `ui` processes
 - a formalised routing and handler setup
@@ -19,6 +19,8 @@ The bones of a setup looks like this:
 
 ```ts
 // sending
+import { makeBus } from 'figma-messaging'
+
 const bus = makeBus()
 
 bus.call('foo', 123).then(result => {
@@ -27,6 +29,8 @@ bus.call('foo', 123).then(result => {
 ```
 ```ts
 // receiving
+import { makeBus } from 'figma-messaging'
+
 const bus = makeBus({
   foo (value: number) {
     return value * 2
@@ -48,7 +52,13 @@ function update (handlerId: 'update', items: string[]) {
   return true
 }
 
-// configure the bus (optional)
+// create handlers object
+const handlers = {
+  greet,
+  update,
+}
+
+// bus options (optional)
 const options = {
   logging: true,
   fallback (handlerId: string, ...args: any[]) {
@@ -56,23 +66,17 @@ const options = {
   },
 }
 
-// create handlers object
-const handlers = {
-  greet,
-  update,
-}
-
 // create the bus
 const bus = useBus(handlers, options)
 
-// handle events
-function onSomeEvent () {
-  bus.call('some-action', 'foo', 123)
+// handle events and call bus
+document.addEventListener('some-event', () => {
+  bus.call('someAction', 'foo', 123) // the name and parameters of a handler in a target process
     .then(data => {
       // handle any responses here
     })
     .catch(err => {
-      // catch any errors here
+      // optionally catch any errors here
     })  
 }
 ```
@@ -83,17 +87,23 @@ Note that each process can both send _and_ receive messages.
 
 ### IDE auto-complete
 
-Note that `makeBus()` is generic in order to provide IDE auto-completion:
+#### Concept
+
+The `makeBus()` factory supports IDE auto-completion through the magic of [generics](https://www.youtube.com/watch?v=dLPgQRbVquo):
 
 ![IDE parameters](assets/ide-id.png)
 
-It relies on having the types of the handlers of the _opposite_ process passed in:
+The auto-complete functionality will suggest available handler ids, as well as the parameters and return types of resolved handlers. 
+
+#### Usage
+
+To enable auto-completion, pass the *type* of the receiving handlers object as a "type argument":
 
 ```ts
-const bus = makeBus<TargetHandlers>(sourceHandlers)
+const bus = makeBus<TargetHandlers>(sourceHandlers) // the type is passed in the <angle brackets>
 ```
 
-As such you should export types from each process to be consumed by the other:
+To do this, export the handler types from each process to be consumed by the other:
 
 ```ts
 // ui.tsx
@@ -127,20 +137,47 @@ const handlers = {
 const bus = makeBus<UiHandlers>(handlers) // note; the generic type must be from the OTHER process!
 
 // call ui
-bus.call('...') // should show list of handlers, their parameters, return type, etc
+bus.call('...') // should show list of handlers, their parameters, return type, etc 
 ```
 
-You can view the full signature of the handler (once the handler id has been typed) by hovering over the `call()` method:
+#### React / SPA
+
+It may be that you can't declare and export UI handlers at the top level of a file; for example, a handler needs context of the UI.
+
+In such a case, declare and export a standalone type description that the Main process can import:
+
+```ts
+// top of file
+export type UiHandlers = {
+  greet: (name: string) => void
+  ...
+}
+
+// main plugin function
+export function Plugin () {
+  const [name, setName] = useState('')
+  const handlers: UiHandlers = {
+    greet (name: string) {
+      setName(name)
+    }
+  }
+}
+```
+
+Make sure **not** to use an `interface` or type-completion won't work.
+
+#### IDE support
+
+In the opposite process you can view the full handler signature (for valid handlers) by hovering over the `call()` method:
 
 ![IDE parameters](assets/ide-params.png)
 
-On WebStorm, you may need to hold down `Cmd` (Mac) or `Ctrl` (Windows) to view the same.
+> *On WebStorm, hold down `Cmd` (Mac) or `Ctrl` (Windows) as you hover*
 
-Note that everything – including the return type – is type-safe:
+Note that:
 
-![IDE parameters](assets/ide-return.png)
-
-Note that auto-complete will only show handlers included in the imported type; if you add new handlers using `bus.on(...)` these can be called, but will not show in your IDE.
+- auto-complete will only resolve handlers passed in the initial `makeBus()` type argument
+- if you add new handlers using `bus.on(...)` these won't show, but can still be entered and called
 
 ### Nested routes
 
@@ -159,7 +196,7 @@ const handlers = {
 
 The Bus service has built-in error handling.
 
-Any uncaught errors thrown in the target process will be caught, serialised, sent back to the source process, and passed to the `call()` Promise's `reject` handler.
+Any uncaught errors thrown in the target process will be caught, serialised, sent back to the source process, and passed to the `call()` Promise's `reject` handler. Use ` try/catch / await` or `.then().catch()` to handle any errors.
 
 ### Fallback handler
 

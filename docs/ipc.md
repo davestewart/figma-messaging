@@ -9,6 +9,8 @@ The IPC service is a low-level inter-process communication service which provide
 - catchable errors
 - optional logging
 
+*Generally, you'll only need to use the [Bus](bus.md) service, but know that the IPC service does the heavy lifting*
+
 ## Usage
 
 To work with the IPC service, you'll need to import and initialise it in one or both processes.

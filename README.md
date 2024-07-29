@@ -4,48 +4,23 @@
 
 ## Overview
 
-Figma Messaging is a type-safe, auto-completing wrapper for Figma's [Messaging API](https://www.figma.com/plugin-docs/creating-ui/#sending-messages-between-the-ui-and-plugin-code).
+Figma Messaging is a two-way, await-able and type-safe replacement for Figma's [Messaging API](https://www.figma.com/plugin-docs/creating-ui/#sending-messages-between-the-ui-and-plugin-code).
 
-Set up correctly, it can auto-complete...
+It has a [simple but powerful](docs/README.md#usage) API with additional opt-in [auto-completion](docs/bus.md#ide-auto-complete) functionality:
 
-...handler **ids**:
+Handler **ids**:
 
 ![screenshot](https://github.com/davestewart/figma-messaging/raw/main/docs/assets/ide-id.png)
 
-...handler **parameters**:
+Handler **parameters**:
 
 ![screenshot](https://github.com/davestewart/figma-messaging/raw/main/docs/assets/ide-params.png)
 
-...handler **responses**:
+Handler **responses**:
 
 ![screenshot](https://github.com/davestewart/figma-messaging/raw/main/docs/assets/ide-return.png)
 
-You can use Figma Messaging in any [Figma Plugin](https://www.figma.com/plugin-docs/) for robust, two-way messaging between `main` and `ui` processes.
-
-## Services
-
-The package comprises two services, `ipc` and `bus`:
-
-`ipc` is a low-level inter-process communication service which provides:
-
-- two-way communication between `main` and `ui` processes
-- awaitable call and response
-- catchable errors
-- optional logging
-
-`bus` is a higher-level message bus service (which wraps `ipc`) to provide:
-
-- a formalised routing and handler setup
-- IDE auto-completion of known route names and parameters
-- typed parameter and return data for known routes
-- flexibility to call arbitrary / unknown routes 
-- fallback handler for arbitrary / unknown routes
-
-Generally, [bus](docs/bus.md) will be your first choice as it's more feature-rich and user-friendly.
-
-## Demo
-
-To see real-world code, or to build and run a demo plugin live in Figma, check out the demo folder.
+Figma Messaging provides robust messaging capabilities for any [Figma Plugin](https://www.figma.com/plugin-docs/) with a build step.
 
 ## Next steps
 

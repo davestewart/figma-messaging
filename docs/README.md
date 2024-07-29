@@ -8,59 +8,52 @@ Install from NPM using your package manager of choice:
 npm i 'figma-messaging'
 ```
 
-## Setup
-
-For each process (i.e. `main` or `ui`) you'll need to `import` and initialise the required service.
+## Usage
 
 Messaging can be:
 
 - **one-way**, e.g. sending updates from `ui` to `main` when [the user interacts](https://www.figma.com/plugin-docs/creating-ui/) with the plugin UI
-- **two-way**, e.g. as above, but also sending updates from `main` to `ui` when [an event happens](https://www.figma.com/plugin-docs/api/properties/figma-on/) in the editor
+- **two-way**, e.g. sending updates from `main` to `ui` when [an event happens](https://www.figma.com/plugin-docs/api/properties/figma-on/) in the editor (in addition to the above)
 
-Note that the setup for each service in each process will be identical, but the implementation differs between them.
-
-## Usage
-
-Usage for both services is similar, in that:
-
-- Messages are sent with a `handlerId` and `...args`
-- Messages are received and can be filtered by their `handlerId`
-- Messages can be replied to by simply returning a value (or throwing an error)
-- Replies can be handled by awaiting the returned value
-- Errors can be handled with `try/catch`
-
-For example:
+Here's a simple example of one-way communication from the UI to Main using the [Bus](bus.md) service:
 
 ```ts
-// sending
-import { ipc } from 'figma-messaging'
-ipc
-  .send('greet', 'hello from main!')
-  .then((reply) => {
-    console.log('ui said:', reply)
-  })
+// ui
+import { makeBus } from 'figma-messaging'
+
+// create a bus
+const bus = makeBus() // no handlers (so ui > main communication only)
+
+// call main
+document.querySelector('button').addEventListener('click', event => {
+  bus.call('greet', 'hello from ui!').then(result => {
+    console.log(value) // hello from main!
+  })  
+})
 ```
 
 ```ts
-// receiving
-import { ipc } from 'figma-messaging'
-ipc.init((handlerId, ...args) => {
-  if (handlerId === 'greet') {
-    console.log(...args)
-    return 'hello from ui!'
+// main
+import { makeBus } from 'figma-messaging'
+
+// create a bus
+const bus = makeBus({
+  greet (value) {
+    console.log(value) // hello from ui!
+    return 'hello from main!'
   }
 })
 ```
 
-The above example shows the basic [IPC](ipc.md) service, though generally you'll use the more feature-packed [Bus](bus.md) service.
+This is a basic example, but read on to find out about fallback handlers, error handling, auto-complete, and more.
 
 ## Next
 
-Choose which service to use:
+Services:
 
 - [Bus](./bus.md)
 - [IPC](./ipc.md)
 
-More information on:
+Appendix:
 
 - [Types](types.md)
