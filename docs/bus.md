@@ -38,7 +38,7 @@ const bus = makeBus({
 })
 ```
 
-A fleshed-out version looks like this:
+A fleshed-out version might look like this:
 
 ```ts
 import { makeBus } from 'figma-messaging'
@@ -85,100 +85,6 @@ Note that each process can both send _and_ receive messages.
 
 ## Advanced options
 
-### IDE auto-complete
-
-#### Concept
-
-The `makeBus()` factory supports IDE auto-completion through the magic of [generics](https://www.youtube.com/watch?v=dLPgQRbVquo):
-
-![IDE parameters](assets/ide-id.png)
-
-The auto-complete functionality will suggest available handler ids, as well as the parameters and return types of resolved handlers. 
-
-#### Usage
-
-To enable auto-completion, pass the *type* of the receiving handlers object as a "type argument":
-
-```ts
-const bus = makeBus<TargetHandlers>(sourceHandlers) // the type is passed in the <angle brackets>
-```
-
-To do this, export the handler types from each process to be consumed by the other:
-
-```ts
-// ui.tsx
-function greet (handlerId: 'greet', salutation: 'hello' | 'hey' | 'yo') {
-  return `${salutation} world!`
-}
-
-// ui handlers
-const handlers = {
-  greet,
-  ...
-}
-
-// export just the type of the handlers
-export UiHandlers = typeof handlers
-```
-
-```ts
-// main.ts
-import { makeBus } from 'figma messaging'
-
-// import UI handlers type
-import type { UiHandlers } from './ui'
-
-// main handlers
-const handlers = {
-  ...
-}
-
-// create bus
-const bus = makeBus<UiHandlers>(handlers) // note; the generic type must be from the OTHER process!
-
-// call ui
-bus.call('...') // should show list of handlers, their parameters, return type, etc 
-```
-
-#### React / SPA
-
-It may be that you can't declare and export UI handlers at the top level of a file; for example, a handler needs context of the UI.
-
-In such a case, declare and export a standalone type description that the Main process can import:
-
-```ts
-// top of file
-export type UiHandlers = {
-  greet: (name: string) => void
-  ...
-}
-
-// main plugin function
-export function Plugin () {
-  const [name, setName] = useState('')
-  const handlers: UiHandlers = {
-    greet (name: string) {
-      setName(name)
-    }
-  }
-}
-```
-
-Make sure **not** to use an `interface` or type-completion won't work.
-
-#### IDE support
-
-In the opposite process you can view the full handler signature (for valid handlers) by hovering over the `call()` method:
-
-![IDE parameters](assets/ide-params.png)
-
-> *On WebStorm, hold down `Cmd` (Mac) or `Ctrl` (Windows) as you hover*
-
-Note that:
-
-- auto-complete will only resolve handlers passed in the initial `makeBus()` type argument
-- if you add new handlers using `bus.on(...)` these won't show, but can still be entered and called
-
 ### Nested routes
 
 Currently, only a flat set of `id: function` pairs is supported (though this may change in a future version).
@@ -196,7 +102,30 @@ const handlers = {
 
 The Bus service has built-in error handling.
 
-Any uncaught errors thrown in the target process will be caught, serialised, sent back to the source process, and passed to the `call()` Promise's `reject` handler. Use ` try/catch / await` or `.then().catch()` to handle any errors.
+Any uncaught errors thrown in the target process will be caught, serialised, sent back to the source process, and passed to the `call()` Promise's `reject` handler. Use ` try/catch / await` or `.then().catch()` to handle any errors:
+
+```ts
+// ui
+const bus = makeBus()
+bus.send('doThingThatMightBreak', data)
+  .then(() => /* success! */)
+  .catch((err) => {
+    setErrorMessage(err.message) // inform the user
+  })
+```
+```ts
+// main
+const bus = makeBus({
+  doThingThatMightBreak (data) {
+    try {
+      // some thing
+    }
+    catch (err) {
+      throw new Error('Could not do the thing!')
+    }
+  }
+})
+```
 
 ### Fallback handler
 
@@ -217,6 +146,115 @@ const bus = useBus(handlers, {
 })
 ```
 
+This is also the place to throw errors. Errors will be handled as noted in the [error handling](#error-handling) section above.
+
+### Logging
+
+If for some reason you want to track what is sent and received by the Bus, you can add a `logging` flag to the options:
+
+```ts
+const bus = useBus(handlers, { logging: true })
+```
+
+The payload of all incoming and outgoing calls will be logged to the console (along with the call stack) using `console.warn()`.
+
+Make sure to turn this off before publishing!
+
+## IDE auto-complete
+
+### Concept
+
+The `makeBus()` factory can provide auto-complete for the target process through the magic of [generics](https://www.youtube.com/watch?v=dLPgQRbVquo):
+
+![IDE parameters](assets/ide-id.png)
+
+It will suggest available handler ids, as well as the parameters and return types of resolved handlers.
+
+### Usage
+
+To enable, pass the *type* of the target process' handlers as a "type argument":
+
+```ts
+const bus = makeBus<TargetHandlers>(sourceHandlers) // the type is passed in the <angle brackets>
+```
+
+To do this, export the handlers object as a separate _type_ from each process, to be imported by the other:
+
+```ts
+// ui.tsx
+function greet (handlerId: 'greet', salutation: 'hello' | 'hey' | 'yo') {
+  return `${salutation} world!`
+}
+
+// ui handlers
+const handlers = {
+  greet,
+  ...
+}
+
+// 1️⃣ export just the type of the handlers
+export UiHandlers = typeof handlers
+```
+
+```ts
+// main.ts
+import { makeBus } from 'figma messaging'
+
+// 2️⃣ import UI handlers type
+import type { UiHandlers } from './ui'
+
+// main handlers
+const handlers = {
+  ...
+}
+
+// 3️⃣ create bus
+const bus = makeBus<UiHandlers>(handlers) // note; the generic type must be from the OTHER process!
+
+// call ui
+bus.call('...') // 🔥 should show list of handlers, their parameters, return type, etc 
+```
+
+### React / SPA
+
+It may be that you can't declare and export UI handlers at the top level of a file; for example, a handler needs context of the UI.
+
+In such a case, declare and export a standalone type declaration that the Main process can import:
+
+```ts
+// top of file
+export type UiHandlers = {
+  greet: (name: string) => void
+  ...
+}
+
+// main plugin function
+export function Plugin () {
+  const [name, setName] = useState('')
+  const handlers: UiHandlers = {
+    greet (name: string) {
+      setName(name)
+    }
+  }
+}
+```
+> [!Important]
+> Make sure to use a `type` (and _not_ an `interface`) or type-completion won't work.
+
+### IDE support
+
+You can view the full signature for valid target handlers by hovering over the `call()` method:
+
+![IDE parameters](assets/ide-params.png)
+
+> *On WebStorm, hold down `Cmd` (Mac) or `Ctrl` (Windows) as you hover*
+
+Note that:
+
+- auto-complete only works for handlers passed in the initial `makeBus()` type argument
+- if you add new handlers using `bus.on(...)` they won't show or get auto-completion
+- you can still enter and call any handler if you know its id and parameters
+
 ## API
 
 ### Helpers
@@ -229,8 +267,13 @@ Params:
 
 - `handlers`: `Record<string, Handler>`
   An optional hash of handlers to be called from the other process
-- `options`: `{ logging: boolean, fallback: MessageHandler }`
+- `options`: `Object`
   An optional hash of options to modify the behaviour of the bus
+  - `fallback`: `MessageHandler`
+    An optional function to handle non-handled calls
+  - `logging`: `boolean`
+    An optional flag to log incoming and outgoing calls to the console
+  
 
 Returns:
 
